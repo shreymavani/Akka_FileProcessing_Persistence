@@ -51,6 +51,5 @@ public class Main {
         // tell the getFileActor to start processing files
         getFileActorRef.tell(("/Users/smavani/INPUT_OUTPUT_FOR_TESTING/INPUT"));
 
-
     }
 }
