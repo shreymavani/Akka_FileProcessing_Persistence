@@ -6,18 +6,20 @@ import akka.persistence.typed.*;
 import akka.persistence.typed.javadsl.*;
 import akka.persistence.typed.javadsl.Recovery;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FilterFileActor extends EventSourcedBehavior<String, String, List<String>> {
 
     private final ActorRef<String> putFileActorRef;
 
-    public FilterFileActor(ActorContext<String> context, ActorRef<String> putFileActorRef,PersistenceId persistenceId) {
+    public FilterFileActor(ActorRef<String> putFileActorRef,PersistenceId persistenceId) {
         super(persistenceId);
         this.putFileActorRef = putFileActorRef;
     }
 
     public static Behavior<String> create(ActorRef<String> putFileActorRef,PersistenceId persistenceId) {
-        return Behaviors.setup(context -> new FilterFileActor(context, putFileActorRef,persistenceId));
+        return Behaviors.setup(context -> new FilterFileActor(putFileActorRef,persistenceId));
     }
 
     @Override
@@ -33,15 +35,30 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, List<S
                 .build();
     }
 
-    private Effect<String, List<String>> filterFile(List<String> state, String file) {
-        if (file.endsWith(".txt")) {
-            state.add(file);
-            putFileActorRef.tell(file);
-        }
-        return Effect().persist(file).thenRun(() -> {
+    private Effect<String, List<String>> filterFile(List<String> state, String data) {
+        String filterData = stringFiltering(data,"Shrey");
+        putFileActorRef.tell(filterData);
+        return Effect().persist(filterData).thenRun(() -> {
             // Log successful persist event
-//            getContext().getLog().info("File {} persisted successfully", file);
+//            getContext().getLog().info("File {} persisted successfully", filterData);
         });
+    }
+
+    public String stringFiltering(String inputData, String regex) {
+        String[] splitData = inputData.split("\n");
+        String filterData = "";
+//        System.out.println(splitData.length);
+        for (String line : splitData) {
+
+            Pattern pattern = Pattern.compile(regex);            // Compile the pattern
+
+            Matcher matcher = pattern.matcher(line);             // Replace the password with the string ""
+
+            filterData += (matcher.replaceAll("Kuldeep") + "\n");     // Replace the word "password" and password details with the string ""
+        }
+
+        return filterData;
+
     }
 
     @Override

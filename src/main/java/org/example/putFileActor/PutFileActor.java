@@ -4,6 +4,9 @@ import akka.actor.typed.*;
 import akka.actor.typed.javadsl.*;
 import akka.persistence.typed.*;
 import akka.persistence.typed.javadsl.*;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 //import static java.awt.TexturePaintContext.getContext;
@@ -12,13 +15,13 @@ public class PutFileActor extends EventSourcedBehavior<String, String, List<Stri
 
     private final String outputDir;
 
-    public PutFileActor(ActorContext<String> context, String outputDir,PersistenceId persistenceId) {
+    public PutFileActor(String outputDir,PersistenceId persistenceId) {
         super(persistenceId);
         this.outputDir = outputDir;
     }
 
     public static Behavior<String> create(PersistenceId persistenceId,String outputDir) {
-        return Behaviors.setup(context -> new PutFileActor(context, outputDir,persistenceId));
+        return Behaviors.setup(context -> new PutFileActor(outputDir,persistenceId));
     }
 
     @Override
@@ -34,11 +37,17 @@ public class PutFileActor extends EventSourcedBehavior<String, String, List<Stri
                 .build();
     }
 
-    private Effect<String, List<String>> putFile(List<String> state, String file) {
-        state.add(file);
-        // Put the file in the output directory
-        // ...
-        return Effect().persist(file).thenRun(() -> {
+    private Effect<String, List<String>> putFile(List<String> state, String data){
+
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(outputDir, true);
+            fw.write(data);
+            fw.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return Effect().persist(data).thenRun(() -> {
             // Log successful persist event
 //            getContext().getLog().info("File {} persisted successfully", file);
         });
