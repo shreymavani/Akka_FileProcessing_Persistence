@@ -9,10 +9,30 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GetFileActor extends EventSourcedBehavior<String, String, List<String>> {
+public class GetFileActor extends EventSourcedBehavior<String, String, GetFileActor.State> {
 
     private final ActorRef<String> filterActor;
 
+
+    public static class State {
+        private final List<String> items;
+
+        private State(List<String> items) {
+            this.items = items;
+        }
+
+        public State() {
+            this.items = new ArrayList<>();
+        }
+
+        public State addItem(String data) {
+            List<String> newItems = new ArrayList<>(items);
+            newItems.add(0, data);
+            // keep 5 items
+            List<String> latest = newItems.subList(0, Math.min(5, newItems.size()));
+            return new State(latest);
+        }
+    }
     private GetFileActor(ActorContext<String> context, ActorRef<String> filterActor, PersistenceId persistenceId) {
         super(persistenceId);
         this.filterActor = filterActor;
@@ -23,20 +43,20 @@ public class GetFileActor extends EventSourcedBehavior<String, String, List<Stri
     }
 
     @Override
-    public List<String> emptyState() {
-        return new ArrayList<String>();
+    public State emptyState() {
+        return new State();
     }
 
     @Override
-    public CommandHandler<String, String, List<String>> commandHandler() {
+    public CommandHandler<String, String, State> commandHandler() {
         return newCommandHandlerBuilder()
                 .forAnyState()
                 .onCommand(String.class, this::onHandleDirectory)
                 .build();
     }
 
-    private Effect<String, List<String>> onHandleDirectory(List<String> state, String cmd) {
-        File directory = new File(cmd);
+    private Effect<String, State> onHandleDirectory(State state, String path) {
+        File directory = new File(path);
         File[] files = directory.listFiles();
         if (files != null) {
             for (File file : files) {
@@ -52,18 +72,9 @@ public class GetFileActor extends EventSourcedBehavior<String, String, List<Stri
 
 
     @Override
-    public EventHandler<List<String>, String> eventHandler() {
+    public EventHandler<State, String> eventHandler() {
         return newEventHandlerBuilder()
                 .forAnyState()
                 .build();
-    }
-
-    class HandleDirectory{
-        String directoryPath ;
-
-        HandleDirectory(String cmd)
-        {
-            directoryPath = signal;
-        }
     }
 }

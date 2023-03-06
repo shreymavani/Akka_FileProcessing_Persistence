@@ -5,12 +5,33 @@ import akka.actor.typed.javadsl.*;
 import akka.persistence.typed.*;
 import akka.persistence.typed.javadsl.*;
 import akka.persistence.typed.javadsl.Recovery;
+import org.example.getFileActor.GetFileActor;
+
 import java.util.*;
 
-public class FilterFileActor extends EventSourcedBehavior<String, String, List<String>> {
+public class FilterFileActor extends EventSourcedBehavior<String, String, FilterFileActor.State> {
 
     private final ActorRef<String> putFileActorRef;
 
+    public static class State {
+        private final List<String> items;
+
+        private State(List<String> items) {
+            this.items = items;
+        }
+
+        public State() {
+            this.items = new ArrayList<>();
+        }
+
+        public FilterFileActor.State addItem(String data) {
+            List<String> newItems = new ArrayList<>(items);
+            newItems.add(0, data);
+            // keep 5 items
+            List<String> latest = newItems.subList(0, Math.min(5, newItems.size()));
+            return new State(latest);
+        }
+    }
     public FilterFileActor(ActorContext<String> context, ActorRef<String> putFileActorRef,PersistenceId persistenceId) {
         super(persistenceId);
         this.putFileActorRef = putFileActorRef;
@@ -21,21 +42,21 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, List<S
     }
 
     @Override
-    public List<String> emptyState() {
-        return new ArrayList<String>();
+    public State emptyState() {
+        return new State();
     }
 
     @Override
-    public CommandHandler<String, String, List<String>> commandHandler() {
+    public CommandHandler<String, String, State> commandHandler() {
         return newCommandHandlerBuilder()
                 .forAnyState()
                 .onCommand(String.class, this::filterFile)
                 .build();
     }
 
-    private Effect<String, List<String>> filterFile(List<String> state, String file) {
+    private Effect<String, State> filterFile(State state, String file) {
         if (file.endsWith(".txt")) {
-            state.add(file);
+            state.addItem(file);
             putFileActorRef.tell(file);
         }
         return Effect().persist(file).thenRun(() -> {
@@ -45,11 +66,11 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, List<S
     }
 
     @Override
-    public EventHandler<List<String>, String> eventHandler() {
+    public EventHandler<State, String> eventHandler() {
         return newEventHandlerBuilder()
                 .forAnyState()
                 .onEvent(String.class, (state, event) -> {
-                    state.add(event);
+                    state.addItem(event);
                     return state;
                 })
                 .build();
