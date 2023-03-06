@@ -58,4 +58,12 @@ public class GetFileActor extends EventSourcedBehavior<String, String, List<Stri
                 .build();
     }
 
+    class HandleDirectory{
+        String directoryPath ;
+
+        HandleDirectory(String cmd)
+        {
+            directoryPath = signal;
+        }
+    }
 }
