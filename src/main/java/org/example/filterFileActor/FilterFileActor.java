@@ -8,6 +8,8 @@ import akka.persistence.typed.javadsl.Recovery;
 import org.example.getFileActor.GetFileActor;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FilterFileActor extends EventSourcedBehavior<String, String, FilterFileActor.State> {
 
@@ -54,15 +56,30 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, Filter
                 .build();
     }
 
-    private Effect<String, State> filterFile(State state, String file) {
-        if (file.endsWith(".txt")) {
-            state.addItem(file);
-            putFileActorRef.tell(file);
-        }
-        return Effect().persist(file).thenRun(() -> {
+    private Effect<String, State> filterFile(State state, String data) {
+        String filterData = stringFiltering(data,"Shrey");
+        putFileActorRef.tell(filterData);
+        return Effect().persist(data).thenRun(() -> {
             // Log successful persist event
 //            getContext().getLog().info("File {} persisted successfully", file);
         });
+    }
+
+    public String stringFiltering(String inputData, String regex) {
+        String[] splitData = inputData.split("\n");
+        String filterData = "";
+//        System.out.println(splitData.length);
+        for (String line : splitData) {
+
+            Pattern pattern = Pattern.compile(regex);            // Compile the pattern
+
+            Matcher matcher = pattern.matcher(line);             // Replace the password with the string ""
+
+            filterData += (matcher.replaceAll("Kuldeep") + "\n");     // Replace the word "password" and password details with the string ""
+        }
+
+        return filterData;
+
     }
 
     @Override

@@ -6,6 +6,8 @@ import akka.persistence.typed.*;
 import akka.persistence.typed.javadsl.*;
 import org.example.getFileActor.GetFileActor;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 //import static java.awt.TexturePaintContext.getContext;
@@ -55,11 +57,17 @@ public class PutFileActor extends EventSourcedBehavior<String, String, PutFileAc
                 .build();
     }
 
-    private Effect<String, State> putFile(State state, String file) {
-        state.addItem(file);
-        // Put the file in the output directory
-        // ...
-        return Effect().persist(file).thenRun(() -> {
+    private Effect<String, State> putFile(State state, String data) {
+
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(outputDir, true);
+            fw.write(data);
+            fw.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return Effect().persist(data).thenRun(() -> {
             // Log successful persist event
 //            getContext().getLog().info("File {} persisted successfully", file);
         });
