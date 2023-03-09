@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import akka.dispatch.UnboundedMailbox;
 import akka.persistence.typed.javadsl.EventSourcedBehavior;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.example.filterFileActor.FilterFileActor;
 import org.example.getFileActor.GetFileActor;
@@ -25,16 +26,15 @@ public class Main {
         PersistenceId filterFileActorPersistenceId = PersistenceId.ofUniqueId("filterFileActor");
         PersistenceId putFileActorPersistenceId = PersistenceId.ofUniqueId("putFileActor");
 
-
-//        MailboxType myMailboxType = Mailboxes.get().lookupByQueueType(UnboundedMailbox.class);
-
-
+//        Config config = ConfigFactory.load("config.conf");
+//        Config config1 = system.settings().config();
+//        System.out.println(config.root().render());
         // create the actors using EventSourcedBehavior
         ActorRef<String> putFileActorRef = system
                 .systemActorOf(
                         PutFileActor.create(putFileActorPersistenceId, "/Users/smavani/INPUT_OUTPUT_FOR_TESTING/OUTPUT/output"),
                         "putFileActor"
-                ,Props.empty());
+                ,MailboxSelector.bounded(1000));
 
         ActorRef<String> filterFileActorRef = system
                 .systemActorOf(
