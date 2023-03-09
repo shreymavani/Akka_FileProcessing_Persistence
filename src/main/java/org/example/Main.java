@@ -4,7 +4,6 @@ import akka.actor.typed.*;
 import akka.actor.typed.javadsl.*;
 import akka.dispatch.*;
 import akka.persistence.typed.*;
-//import akka.dispatch.BoundedMessageQueueWithOverflow;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import akka.dispatch.UnboundedMailbox;
@@ -14,21 +13,28 @@ import com.typesafe.config.ConfigFactory;
 import org.example.filterFileActor.FilterFileActor;
 import org.example.getFileActor.GetFileActor;
 import org.example.putFileActor.PutFileActor;
-import scala.concurrent.duration.Duration;
-import scala.concurrent.duration.FiniteDuration;
 
 public class Main {
     public static void main(String[] args) {
-        ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(),"FileProcessingSystem",ConfigFactory.load());
 
         // create the persistence IDs for the actors
         PersistenceId getFileActorPersistenceId = PersistenceId.ofUniqueId("getFileActor");
         PersistenceId filterFileActorPersistenceId = PersistenceId.ofUniqueId("filterFileActor");
         PersistenceId putFileActorPersistenceId = PersistenceId.ofUniqueId("putFileActor");
 
-//        Config config = ConfigFactory.load("config.conf");
-//        Config config1 = system.settings().config();
-//        System.out.println(config.root().render());
+
+// load the normal config stack (system props, then application.conf, then reference.conf)
+        Config regularConfig = ConfigFactory.load();
+        Config file = ConfigFactory.load("config.conf");
+        Config combined = file.withFallback(regularConfig);
+        Config complete = ConfigFactory.load(combined);
+
+//        System.out.println(complete.root().render());
+//        System.out.println(complete.getString("default-mailbox.mailbox-type"));
+
+        ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(),"FileProcessingSystem",complete);
+
+
         // create the actors using EventSourcedBehavior
         ActorRef<String> putFileActorRef = system
                 .systemActorOf(
