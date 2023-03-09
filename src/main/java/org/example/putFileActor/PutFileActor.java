@@ -16,6 +16,8 @@ public class PutFileActor extends EventSourcedBehavior<String, String, PutFileAc
 
     private final String outputDir;
 
+    //    final class BookingCompleted implements Event {}                //For Defining Snapshotting policy
+
     public static class State {
         private final List<String> items;
 

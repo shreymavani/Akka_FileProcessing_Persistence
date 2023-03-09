@@ -15,6 +15,7 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, Filter
 
     private final ActorRef<String> putFileActorRef;
 
+    //    final class BookingCompleted implements Event {}                //For Defining Snapshotting policy
     public static class State {
         private final List<String> items;
 
