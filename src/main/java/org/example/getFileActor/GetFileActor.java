@@ -4,7 +4,15 @@ import akka.actor.typed.*;
 import akka.actor.typed.javadsl.*;
 import akka.persistence.typed.*;
 import akka.persistence.typed.javadsl.*;
+<<<<<<< HEAD
 
+=======
+import akka.persistence.typed.DeleteEventsFailed;
+import akka.persistence.typed.DeleteSnapshotsFailed;
+import akka.persistence.typed.RecoveryCompleted;
+import akka.persistence.typed.SnapshotFailed;
+import akka.persistence.typed.SnapshotSelectionCriteria;
+>>>>>>> state
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -12,12 +20,37 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GetFileActor extends EventSourcedBehavior<String, String, List<String>> {
+public class GetFileActor extends EventSourcedBehavior<String, String, GetFileActor.State> {
 
     private final ActorRef<String> filterActor;
     private static final int MAX_BATCH_SIZE = 1024;
 
+<<<<<<< HEAD
     private GetFileActor( ActorRef<String> filterActor, PersistenceId persistenceId) {
+=======
+//    final class BookingCompleted implements Event {}                //For Defining Snapshotting policy
+
+    public static class State {
+        private final List<String> items;
+
+        private State(List<String> items) {
+            this.items = items;
+        }
+
+        public State() {
+            this.items = new ArrayList<>();
+        }
+
+        public State addItem(String data) {
+            List<String> newItems = new ArrayList<>(items);
+            newItems.add(0, data);
+            // keep 5 items
+            List<String> latest = newItems.subList(0, Math.min(5, newItems.size()));
+            return new State(latest);
+        }
+    }
+    private GetFileActor(ActorContext<String> context, ActorRef<String> filterActor, PersistenceId persistenceId) {
+>>>>>>> state
         super(persistenceId);
         this.filterActor = filterActor;
     }
@@ -27,19 +60,23 @@ public class GetFileActor extends EventSourcedBehavior<String, String, List<Stri
     }
 
     @Override
-    public List<String> emptyState() {
-        return new ArrayList<String>();
+    public State emptyState() {
+        return new State();
     }
 
     @Override
-    public CommandHandler<String, String, List<String>> commandHandler() {
+    public CommandHandler<String, String, State> commandHandler() {
         return newCommandHandlerBuilder()
                 .forAnyState()
                 .onCommand(String.class, this::onHandleDirectory)
                 .build();
     }
 
+<<<<<<< HEAD
     private Effect<String, List<String>> onHandleDirectory(List<String> state, String path) {
+=======
+    private Effect<String, State> onHandleDirectory(State state, String path) {
+>>>>>>> state
         File directory = new File(path);                                                //path to directory
 
         File[] files = directory.listFiles();
@@ -91,9 +128,46 @@ public class GetFileActor extends EventSourcedBehavior<String, String, List<Stri
 
 
     @Override
-    public EventHandler<List<String>, String> eventHandler() {
+    public EventHandler<State, String> eventHandler() {
         return newEventHandlerBuilder()
                 .forAnyState()
                 .build();
     }
+<<<<<<< HEAD
+=======
+
+    @Override // override retentionCriteria in EventSourcedBehavior
+    public RetentionCriteria retentionCriteria() {
+        return RetentionCriteria.snapshotEvery(100, 2).withDeleteEventsOnSnapshot();    //Snapshot deletion is triggered after saving a new snapshot.The above example will save snapshots automatically every numberOfEvents = 100. Snapshots that have sequence number less than the sequence number of the saved snapshot minus keepNSnapshots * numberOfEvents (100 * 2) are automatically deleted.Event deletion is triggered after saving a new snapshot. Old events would be deleted prior to old snapshots being deleted.
+    }
+
+//    @Override // override shouldSnapshot in EventSourcedBehavior
+//    public boolean shouldSnapshot(State state, String event, long sequenceNr) {
+//        return event instanceof BookingCompleted;         //BookingCompleted is java class,in which we would specify when to take snapshot
+//    }
+
+    @Override
+    public SignalHandler<State> signalHandler() {
+        return newSignalHandlerBuilder()
+                .onSignal(
+                        SnapshotFailed.class,
+                        (state, completed) -> {
+                            throw new RuntimeException("TODO: add some on-snapshot-failed side-effect here");
+                        })
+                .onSignal(
+                        DeleteSnapshotsFailed.class,
+                        (state, completed) -> {
+                            throw new RuntimeException(
+                                    "TODO: add some on-delete-snapshot-failed side-effect here");
+                        })
+                .onSignal(
+                        DeleteEventsFailed.class,
+                        (state, completed) -> {
+                            throw new RuntimeException(
+                                    "TODO: add some on-delete-snapshot-failed side-effect here");
+                        })
+                .build();
+    }
+    // #retentionCriteriaWithSignals
+>>>>>>> state
 }
