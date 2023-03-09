@@ -48,7 +48,7 @@ public class GetFileActor extends EventSourcedBehavior<String, String, GetFileAc
     }
 
     public static Behavior<String> create(ActorRef<String> filterActor, PersistenceId persistenceId) {
-        return Behaviors.setup(context -> new GetFileActor(context, filterActor, persistenceId));
+        return Behaviors.<String>supervise(Behaviors.setup(context -> new GetFileActor(context, filterActor, persistenceId))).onFailure(SupervisorStrategy.restart());
     }
 
     @Override

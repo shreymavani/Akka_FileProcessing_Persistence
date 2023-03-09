@@ -4,9 +4,9 @@ import akka.actor.typed.*;
 import akka.actor.typed.javadsl.*;
 import akka.persistence.typed.*;
 import akka.persistence.typed.javadsl.*;
-import akka.persistence.typed.javadsl.Recovery;
-import org.example.getFileActor.GetFileActor;
+import com.sun.org.apache.bcel.internal.generic.NEW;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 public class FilterFileActor extends EventSourcedBehavior<String, String, FilterFileActor.State> {
 
     private final ActorRef<String> putFileActorRef;
-
+    private PersistenceId persistenceId;
     //    final class BookingCompleted implements Event {}                //For Defining Snapshotting policy
     public static class State {
         private final List<String> items;
@@ -35,13 +35,16 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, Filter
             return new State(latest);
         }
     }
-    public FilterFileActor(ActorRef<String> putFileActorRef,PersistenceId persistenceId) {
+
+    public FilterFileActor(ActorRef<String> putFileActorRef, PersistenceId persistenceId) {
+//        super(persistenceId,SupervisorStrategy.restartWithBackoff(
+//                Duration.ofSeconds(10), Duration.ofSeconds(30), 0.2));          //minBackoff,maxBackoff,randomFactor
         super(persistenceId);
         this.putFileActorRef = putFileActorRef;
     }
 
-    public static Behavior<String> create(ActorRef<String> putFileActorRef,PersistenceId persistenceId) {
-        return Behaviors.setup(context -> new FilterFileActor(putFileActorRef,persistenceId));
+    public static Behavior<String> create(ActorRef<String> putFileActorRef, PersistenceId persistenceId) {
+        return Behaviors.<String>supervise(Behaviors.setup(context -> new FilterFileActor(putFileActorRef, persistenceId))).onFailure(SupervisorStrategy.restart());
     }
 
     @Override

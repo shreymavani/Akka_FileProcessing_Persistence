@@ -43,7 +43,7 @@ public class PutFileActor extends EventSourcedBehavior<String, String, PutFileAc
     }
 
     public static Behavior<String> create(PersistenceId persistenceId,String outputDir) {
-        return Behaviors.setup(context -> new PutFileActor(outputDir,persistenceId));
+        return Behaviors.<String>supervise(Behaviors.setup(context -> new PutFileActor(outputDir,persistenceId))).onFailure(SupervisorStrategy.restart());
     }
 
     @Override
