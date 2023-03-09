@@ -35,13 +35,13 @@ public class PutFileActor extends EventSourcedBehavior<String, String, PutFileAc
             return new State(latest);
         }
     }
-    public PutFileActor(ActorContext<String> context, String outputDir,PersistenceId persistenceId) {
+    public PutFileActor(String outputDir,PersistenceId persistenceId) {
         super(persistenceId);
         this.outputDir = outputDir;
     }
 
     public static Behavior<String> create(PersistenceId persistenceId,String outputDir) {
-        return Behaviors.setup(context -> new PutFileActor(context, outputDir,persistenceId));
+        return Behaviors.setup(context -> new PutFileActor(outputDir,persistenceId));
     }
 
     @Override
@@ -83,10 +83,38 @@ public class PutFileActor extends EventSourcedBehavior<String, String, PutFileAc
                 })
                 .build();
     }
+    @Override // override retentionCriteria in EventSourcedBehavior
+    public RetentionCriteria retentionCriteria() {
+        return RetentionCriteria.snapshotEvery(100, 2).withDeleteEventsOnSnapshot();    //Snapshot deletion is triggered after saving a new snapshot.The above example will save snapshots automatically every numberOfEvents = 100. Snapshots that have sequence number less than the sequence number of the saved snapshot minus keepNSnapshots * numberOfEvents (100 * 2) are automatically deleted.Event deletion is triggered after saving a new snapshot. Old events would be deleted prior to old snapshots being deleted.
+    }
 
-//    @Override
-//    public Recovery recovery() {
-//        return Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.none());
+//    @Override // override shouldSnapshot in EventSourcedBehavior
+//    public boolean shouldSnapshot(State state, String event, long sequenceNr) {
+//        return event instanceof BookingCompleted;         //BookingCompleted is java class,in which we would specify when to take snapshot
 //    }
+
+    @Override
+    public SignalHandler<PutFileActor.State> signalHandler() {
+        return newSignalHandlerBuilder()
+                .onSignal(
+                        SnapshotFailed.class,
+                        (state, completed) -> {
+                            throw new RuntimeException("TODO: add some on-snapshot-failed side-effect here");
+                        })
+                .onSignal(
+                        DeleteSnapshotsFailed.class,
+                        (state, completed) -> {
+                            throw new RuntimeException(
+                                    "TODO: add some on-delete-snapshot-failed side-effect here");
+                        })
+                .onSignal(
+                        DeleteEventsFailed.class,
+                        (state, completed) -> {
+                            throw new RuntimeException(
+                                    "TODO: add some on-delete-snapshot-failed side-effect here");
+                        })
+                .build();
+    }
+    // #retentionCriteriaWithSignals
 }
 
