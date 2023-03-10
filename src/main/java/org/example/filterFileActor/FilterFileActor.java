@@ -61,9 +61,10 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, Filter
     }
 
     private Effect<String, State> filterFile(State state, String data) {
-        String filterData = stringFiltering(data,"Shrey");
-        putFileActorRef.tell(filterData);
-        return Effect().persist(filterData).thenRun(() -> {
+
+        return Effect().persist(data).thenRun(() -> {
+            String filterData = stringFiltering(data,"Shrey");
+            putFileActorRef.tell(filterData);
             // Log successful persist event
 //            getContext().getLog().info("File {} persisted successfully", file);
         });
@@ -130,5 +131,10 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, Filter
                 .build();
     }
     // #retentionCriteriaWithSignals
+
+//    @Override
+//    public Recovery recovery() {
+//        return  Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.latest());
+//    }
 }
 

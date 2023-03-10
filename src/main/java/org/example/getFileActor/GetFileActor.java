@@ -155,4 +155,10 @@ public class GetFileActor extends EventSourcedBehavior<String, String, GetFileAc
                 .build();
     }
     // #retentionCriteriaWithSignals
+
+//    @Override
+//    public Recovery recovery() {
+//        return  Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.latest());
+//    }
+
 }

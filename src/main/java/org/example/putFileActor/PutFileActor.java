@@ -119,5 +119,11 @@ public class PutFileActor extends EventSourcedBehavior<String, String, PutFileAc
                 .build();
     }
     // #retentionCriteriaWithSignals
+
+
+//    @Override
+//    public Recovery recovery() {
+//        return  Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.latest());
+//    }
 }
 
