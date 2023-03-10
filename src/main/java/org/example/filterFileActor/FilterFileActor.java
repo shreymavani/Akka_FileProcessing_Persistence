@@ -63,7 +63,7 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, Filter
     private Effect<String, State> filterFile(State state, String data) {
         String filterData = stringFiltering(data,"Shrey");
         putFileActorRef.tell(filterData);
-        return Effect().persist(data).thenRun(() -> {
+        return Effect().persist(filterData).thenRun(() -> {
             // Log successful persist event
 //            getContext().getLog().info("File {} persisted successfully", file);
         });

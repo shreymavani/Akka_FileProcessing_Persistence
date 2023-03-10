@@ -40,7 +40,7 @@ public class Main {
                 .systemActorOf(
                         PutFileActor.create(putFileActorPersistenceId, "/Users/smavani/INPUT_OUTPUT_FOR_TESTING/OUTPUT/output"),
                         "putFileActor"
-                ,MailboxSelector.bounded(1000));
+                ,MailboxSelector.bounded(1000));            //Default Mailbox-type = SingleConsumerOnlyUnboundedMailbox,So we can change it to bounded mailbox-type
 
         ActorRef<String> filterFileActorRef = system
                 .systemActorOf(

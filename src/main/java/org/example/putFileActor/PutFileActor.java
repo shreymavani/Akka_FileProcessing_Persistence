@@ -61,15 +61,16 @@ public class PutFileActor extends EventSourcedBehavior<String, String, PutFileAc
 
     private Effect<String, State> putFile(State state, String data) {
 
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter(outputDir, true);
-            fw.write(data);
-            fw.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         return Effect().persist(data).thenRun(() -> {
+
+            FileWriter fw = null;
+            try {
+                fw = new FileWriter(outputDir, true);
+                fw.write(data);
+                fw.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             // Log successful persist event
 //            getContext().getLog().info("File {} persisted successfully", file);
         });
