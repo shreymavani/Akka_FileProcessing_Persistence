@@ -62,7 +62,7 @@ public class FilterFileActor extends EventSourcedBehavior<String, String, Filter
 
     private Effect<String, State> filterFile(State state, String data) {
 
-        return Effect().persist(data).thenRun(() -> {
+        return Effect().persist(data).thenRun(() -> {                                   //For persistAll event,just pass Array.aslist(data) in persist and it will acts as persistAll.
             String filterData = stringFiltering(data,"Shrey");
             putFileActorRef.tell(filterData);
             // Log successful persist event
